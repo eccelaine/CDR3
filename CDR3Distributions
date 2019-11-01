@@ -1,0 +1,104 @@
+import pandas as pd
+from pandas import DataFrame
+import numpy as np
+import os
+import re
+import statistics 
+import scipy
+from scipy.stats import zscore
+import seaborn as sns
+import matplotlib.pyplot as plt
+# from Kidera import kidera
+import csv
+
+%matplotlib inline
+
+
+#read in csv from sample stats run
+df=pd.read_csv("files_merged.csv")
+df1=df.drop(['V','J','SV'], axis=1)
+df1.head(5)
+
+OUTFILE= 'XXX'
+
+#setting up
+CDR3 = {}
+
+Charged= ('R', 'K', 'D', 'E')
+Polar= ('Q', 'N', 'H', 'S', 'T', 'C')
+Aromatic= ('W', 'Y', 'M')
+Hydrophobic= ('A', 'I', 'L', 'F', 'V', 'P', 'G')
+
+
+for i,row in enumerate(df1['CDR3']):
+    AA = str(row)
+    SV = int(df1['Count'][i])
+#     print (vars(df1))
+    print (AA,SV)
+    
+    
+    num_c= 0
+    num_p= 0 
+    num_a= 0 
+    num_h= 0
+    
+    if AA not in CDR3: 
+        CDR3[AA] = {
+                'Length': len(AA),
+                'SV': SV,
+                'Charged': '',
+                'Charged_count':-1,
+                'Polar': '',
+                'Polar_count': -1,
+                'Aromatic': '',
+                'Aromatic_count':-1,
+                'Hydrophobic': '',
+                'Hydrophobic_count':-1}
+
+        #used split instead of strip bc strip makes it unhashable
+        for x in AA: 
+#             print(x)
+            if x in Charged: 
+                CDR3[AA]['Charged']+=x
+
+            elif x in Polar: 
+                CDR3[AA]['Polar']+=x
+
+            elif x in Aromatic: 
+                CDR3[AA]['Aromatic']+=x
+
+            elif x in Hydrophobic:
+                CDR3[AA]['Hydrophobic']+=x 
+
+            num_c= len(CDR3[AA]['Charged']) 
+            CDR3[AA]['Charged_count'] = num_c            
+
+            num_p= len(CDR3[AA]['Polar']) 
+            CDR3[AA]['Polar_count'] = num_p
+
+            num_a= len(CDR3[AA]['Aromatic']) 
+            CDR3[AA]['Aromatic_count'] = num_a
+
+            num_h= len(CDR3[AA]['Hydrophobic']) 
+            CDR3[AA]['Hydrophobic_count'] = num_h
+            
+    else: 
+        #this will sum up the SV counts for every CDR3 AA thats the same
+        CDR3[AA]['SV']+=SV
+        
+#     print(CDR3[AA])
+
+with open (OUTFILE, 'w')as fout: 
+    fout.write ('AA, AAlength, SV, Charged, Charged_cout, Polar, Polar_count, Aromatic, Aromatic_count, Hydrophobic, Hydrophobic_count, \n')
+    for AA in CDR3: 
+        fout.write(AA + ',' 
+                   + str(CDR3[AA]['Length']) + ',' 
+                   + str(CDR3[AA]['SV']) + ',' 
+                   + str(CDR3[AA]['Charged']) + ',' 
+                   + str(CDR3[AA]['Charged_count']) + ',' 
+                   + str(CDR3[AA]['Polar']) + ',' 
+                   + str(CDR3[AA]['Polar_count']) + ',' 
+                   + str(CDR3[AA]['Aromatic']) + ',' 
+                   + str(CDR3[AA]['Aromatic_count']) + ',' 
+                   + str(CDR3[AA]['Hydrophobic']) + ',' 
+                   + str(CDR3[AA]['Hydrophobic_count']) + '\n')
